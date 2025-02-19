@@ -6,13 +6,11 @@ import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
@@ -26,14 +24,14 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError('Invalid credentials');
+        alert('Invalid credentials');
         return;
       }
 
       router.push('/dashboard');
       router.refresh();
-    } catch (error) {
-      setError('An error occurred during login');
+    } catch {
+      alert('An error occurred during login');
     } finally {
       setIsLoading(false);
     }
@@ -84,12 +82,6 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
-
-              {error && (
-                <div className="mt-4 rounded-lg bg-red-50 p-3 text-center text-sm font-medium text-red-600 ring-1 ring-inset ring-red-600/10">
-                  {error}
-                </div>
-              )}
 
               <button
                 type="submit"

@@ -1,5 +1,4 @@
 import { Inter } from 'next/font/google';
-import { headers } from 'next/headers';
 import SessionProvider from '@/components/SessionProvider';
 import './globals.css';
 

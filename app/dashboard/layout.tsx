@@ -1,21 +1,16 @@
 'use client';
-
+import { signOut } from 'next-auth/react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Fragment, useState } from 'react';
 import { Dialog, Menu, Transition } from '@headlessui/react';
 import {
   Bars3Icon,
   HomeIcon,
   UsersIcon,
-  XMarkIcon,
   CalendarIcon,
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
-}
 
 export default function DashboardLayout({
   children,
@@ -24,6 +19,7 @@ export default function DashboardLayout({
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (status === 'loading') {
@@ -90,10 +86,10 @@ export default function DashboardLayout({
                         <li key={item.name}>
                           <a
                             href={item.href}
-                            className={`group flex items-center gap-x-3 rounded-lg px-4 py-2.5 text-sm font-medium transition ${item.href === router.pathname ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-indigo-100 hover:text-indigo-700'}`}
+                            className={`group flex items-center gap-x-3 rounded-lg px-4 py-2.5 text-sm font-medium transition ${item.href === pathname ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-indigo-100 hover:text-indigo-700'}`}
                           >
                             <item.icon
-                              className={`h-5 w-5 shrink-0 transition ${item.href === router.pathname ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-600'}`}
+                              className={`h-5 w-5 shrink-0 transition ${item.href === pathname ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-600'}`}
                               aria-hidden="true"
                             />
                             {item.name}
@@ -121,10 +117,10 @@ export default function DashboardLayout({
                 <li key={item.name}>
                   <a
                     href={item.href}
-                    className={`group flex items-center gap-x-3 rounded-lg px-4 py-2.5 text-sm font-medium transition ${item.href === router.pathname ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-indigo-100 hover:text-indigo-700'}`}
+                    className={`group flex items-center gap-x-3 rounded-lg px-4 py-2.5 text-sm font-medium transition ${item.href === pathname ? 'bg-indigo-50 text-indigo-600' : 'text-slate-700 hover:bg-indigo-100 hover:text-indigo-700'}`}
                   >
                     <item.icon
-                      className={`h-5 w-5 shrink-0 transition ${item.href === router.pathname ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-600'}`}
+                      className={`h-5 w-5 shrink-0 transition ${item.href === pathname ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-600'}`}
                       aria-hidden="true"
                     />
                     {item.name}
