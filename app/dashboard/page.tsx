@@ -1,9 +1,13 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
   const { data: session } = useSession();
+  const router = useRouter();
+
+  console.log('Session data:', session);
 
   return (
     <div>
@@ -11,6 +15,25 @@ export default function Dashboard() {
         Welcome back, {session?.user?.name}!
       </h1>
       
+      {/* Debug session role */}
+      <div className="mt-2 text-sm text-gray-500">
+        Current role: {session?.user?.role || 'No role'}
+      </div>
+
+      {session?.user?.role === 'PATIENT' && (
+        <div className="mt-6">
+          <button
+            onClick={() => router.push('/dashboard/ai-diagnosis')}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Start AI Diagnosis
+          </button>
+        </div>
+      )}
+
       <div className="mt-6 grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Quick Stats */}
         <div className="bg-white overflow-hidden shadow rounded-lg">
