@@ -2,6 +2,21 @@
 
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
+import AddAppointmentModal from '@/components/AddAppointmentModal';
+
+interface ApiAppointment {
+  id: string;
+  patient: {
+    user: {
+      name: string;
+    };
+  };
+  doctor: {
+    name: string;
+  };
+  datetime: string;
+  status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
+}
 
 interface Appointment {
   id: string;
@@ -17,31 +32,72 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // TODO: Implement actual API call to fetch appointments
-  useEffect(() => {
-    // Simulated data for now
-    const mockAppointments: Appointment[] = [
-      {
-        id: '1',
-        patientName: 'John Doe',
-        doctorName: 'Dr. Smith',
-        date: '2025-02-20',
-        time: '10:00 AM',
-        status: 'SCHEDULED',
-      },
-      {
-        id: '2',
-        patientName: 'Jane Smith',
-        doctorName: 'Dr. Johnson',
-        date: '2025-02-21',
-        time: '2:30 PM',
-        status: 'SCHEDULED',
-      },
-    ];
+  const [error, setError] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    setAppointments(mockAppointments);
-    setIsLoading(false);
+  const fetchAppointments = async () => {
+      try {
+        const response = await fetch('/api/appointments');
+        if (!response.ok) {
+          throw new Error('Failed to fetch appointments');
+        }
+        const data = await response.json();
+        
+        // Transform the data to match our interface
+        const formattedAppointments = data.map((apt: ApiAppointment) => ({
+          id: apt.id,
+          patientName: apt.patient.user.name,
+          doctorName: apt.doctor.name,
+          date: new Date(apt.datetime).toLocaleDateString(),
+          time: new Date(apt.datetime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          status: apt.status,
+        }));
+        
+        setAppointments(formattedAppointments);
+      } catch (err) {
+        console.error('Error fetching appointments:', err);
+        setError('Failed to load appointments');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+  useEffect(() => {
+    fetchAppointments();
   }, []);
+
+  const handleAddAppointment = async (appointmentData: {
+    doctorId: string;
+    datetime: string;
+    notes?: string;
+  }) => {
+    try {
+      const response = await fetch('/api/appointments/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(appointmentData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create appointment');
+      }
+
+      // Refresh the appointments list
+      await fetchAppointments();
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-600">{error}</div>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -64,6 +120,7 @@ export default function AppointmentsPage() {
           <button
             type="button"
             className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+            onClick={() => setIsAddModalOpen(true)}
           >
             Add Appointment
           </button>
@@ -134,6 +191,11 @@ export default function AppointmentsPage() {
           </div>
         </div>
       </div>
+      <AddAppointmentModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={handleAddAppointment}
+      />
     </div>
   );
 }
