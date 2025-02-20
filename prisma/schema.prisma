@@ -25,10 +25,15 @@ model User {
   // Doctor specific relations
   doctorAppointments Appointment[] @relation("DoctorAppointments")
   patients          Patient[]     @relation("DoctorPatients")
+  doctorRecords     MedicalRecord[] @relation("DoctorRecords")
+  referralsMade     Referral[]    @relation("ReferringDoctor")
+  referralsReceived Referral[]    @relation("ReferredDoctor")
 
   // Patient specific relations
   patientProfile    Patient?      @relation("PatientProfile")
   medicalRecords    MedicalRecord[]
+  tests            Test[]        @relation("PatientTests")
+  referrals        Referral[]    @relation("PatientReferrals")
 }
 
 model Patient {
@@ -48,9 +53,15 @@ model MedicalRecord {
   id          String    @id @default(cuid())
   userId      String
   user        User      @relation(fields: [userId], references: [id])
-  diagnosis   String
-  prescription String
+  doctorId    String
+  doctor      User      @relation("DoctorRecords", fields: [doctorId], references: [id])
+  type        RecordType @default(ENCOUNTER)
+  symptoms    String?
+  diagnosis   String?
+  prescription String?
   notes       String?
+  tests       Test[]    @relation("RecordTests")
+  referrals   Referral[] @relation("RecordReferrals")
   date        DateTime  @default(now())
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -73,6 +84,61 @@ enum UserRole {
   ADMIN
   DOCTOR
   PATIENT
+}
+
+enum RecordType {
+  ENCOUNTER
+  AI_DIAGNOSIS
+  TEST_RESULT
+  REFERRAL
+}
+
+model Test {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  status      TestStatus @default(REQUESTED)
+  result      String?
+  patientId   String
+  patient     User      @relation("PatientTests", fields: [patientId], references: [id])
+  recordId    String
+  record      MedicalRecord @relation("RecordTests", fields: [recordId], references: [id])
+  date        DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Referral {
+  id              String    @id @default(cuid())
+  patientId       String
+  patient         User      @relation("PatientReferrals", fields: [patientId], references: [id])
+  referringDoctorId String
+  referringDoctor User      @relation("ReferringDoctor", fields: [referringDoctorId], references: [id])
+  referredDoctorId String
+  referredDoctor  User      @relation("ReferredDoctor", fields: [referredDoctorId], references: [id])
+  reason          String
+  notes           String?
+  status          ReferralStatus @default(PENDING)
+  recordId        String
+  record          MedicalRecord @relation("RecordReferrals", fields: [recordId], references: [id])
+  date            DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum TestStatus {
+  REQUESTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ReferralStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  CANCELLED
 }
 
 enum AppointmentStatus {

@@ -10,6 +10,7 @@ import {
   UsersIcon,
   CalendarIcon,
   DocumentTextIcon,
+  UserPlusIcon,
 } from '@heroicons/react/24/outline';
 
 export default function DashboardLayout({
@@ -39,6 +40,9 @@ export default function DashboardLayout({
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Appointments', href: '/dashboard/appointments', icon: CalendarIcon },
     { name: 'Medical Records', href: '/dashboard/records', icon: DocumentTextIcon },
+    ...(session?.user?.role === 'DOCTOR'
+      ? [{ name: 'New Encounter', href: '/dashboard/encounters', icon: UserPlusIcon }]
+      : []),
     ...(session?.user?.role === 'ADMIN'
       ? [{ name: 'Users', href: '/dashboard/users', icon: UsersIcon }]
       : []),

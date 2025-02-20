@@ -28,14 +28,12 @@ export async function POST(request: Request) {
       // Store the conversation in medical records
       await prisma.medicalRecord.create({
         data: {
+          type: 'AI_DIAGNOSIS',
           diagnosis: 'AI Diagnosis Session',
           prescription: 'N/A',
-          notes: `Patient's Description: ${userResponse}`,
-          user: {
-            connect: {
-              id: session.user.id
-            }
-          }
+          notes: `Patient&apos;s Description: ${userResponse}`,
+          userId: session.user.id,
+          doctorId: session.user.id // For AI diagnosis, set doctor as self
         }
       });
 
