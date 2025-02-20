@@ -6,12 +6,16 @@ import { DocumentTextIcon, DocumentPlusIcon } from '@heroicons/react/24/outline'
 
 interface MedicalRecord {
   id: string;
-  patientName: string;
-  doctorName: string;
+  diagnosis: string;
+  prescription: string;
+  notes: string;
+  createdAt: string;
   date: string;
-  recordType: 'DIAGNOSIS' | 'LAB_RESULT' | 'PRESCRIPTION' | 'IMAGING';
-  title: string;
-  description: string;
+  user: {
+    id: string;
+    name: string;
+    role: string;
+  };
 }
 
 export default function MedicalRecordsPage() {
@@ -20,48 +24,26 @@ export default function MedicalRecordsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
 
-  // TODO: Implement actual API call to fetch medical records
   useEffect(() => {
-    // Simulated data for now
-    const mockRecords: MedicalRecord[] = [
-      {
-        id: '1',
-        patientName: 'John Doe',
-        doctorName: 'Dr. Smith',
-        date: '2025-02-19',
-        recordType: 'DIAGNOSIS',
-        title: 'Initial Consultation',
-        description: 'Patient presented with symptoms of seasonal allergies. Prescribed antihistamines and recommended follow-up in 2 weeks if symptoms persist.',
-      },
-      {
-        id: '2',
-        patientName: 'John Doe',
-        doctorName: 'Dr. Johnson',
-        date: '2025-02-18',
-        recordType: 'LAB_RESULT',
-        title: 'Blood Work Results',
-        description: 'Complete blood count within normal ranges. Cholesterol levels slightly elevated.',
-      },
-    ];
+    const fetchRecords = async () => {
+      try {
+        const response = await fetch('/api/medical-records');
+        if (!response.ok) {
+          throw new Error('Failed to fetch records');
+        }
+        const data = await response.json();
+        setRecords(data);
+      } catch (error) {
+        console.error('Error fetching medical records:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    setRecords(mockRecords);
-    setIsLoading(false);
+    fetchRecords();
   }, []);
 
-  const getRecordTypeColor = (type: MedicalRecord['recordType']) => {
-    switch (type) {
-      case 'DIAGNOSIS':
-        return 'bg-blue-100 text-blue-800';
-      case 'LAB_RESULT':
-        return 'bg-green-100 text-green-800';
-      case 'PRESCRIPTION':
-        return 'bg-purple-100 text-purple-800';
-      case 'IMAGING':
-        return 'bg-orange-100 text-orange-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+
 
   if (isLoading) {
     return (
@@ -113,23 +95,18 @@ export default function MedicalRecordsPage() {
                         <div className="flex items-center">
                           <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2" />
                           <p className="text-sm font-medium text-indigo-600 truncate">
-                            {record.title}
+                            {record.diagnosis}
                           </p>
-                        </div>
-                        <div className="ml-2 flex-shrink-0">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRecordTypeColor(record.recordType)}`}>
-                            {record.recordType.replace('_', ' ')}
-                          </span>
                         </div>
                       </div>
                       <div className="mt-2 sm:flex sm:justify-between">
                         <div className="sm:flex">
                           <p className="flex items-center text-sm text-gray-500">
-                            {record.doctorName}
+                            {record.diagnosis.includes('AI Diagnosis') ? 'AI Diagnosis' : 'Doctor Visit'}
                           </p>
                         </div>
                         <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                          {record.date}
+                          {new Date(record.createdAt).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
@@ -152,37 +129,45 @@ export default function MedicalRecordsPage() {
               <div className="border-t border-gray-200">
                 <dl>
                   <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">Patient Name</dt>
+                    <dt className="text-sm font-medium text-gray-500">Patient</dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                      {selectedRecord.patientName}
+                      {selectedRecord.user.name}
                     </dd>
                   </div>
                   <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">Doctor</dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                      {selectedRecord.doctorName}
+                      {selectedRecord.diagnosis.includes('AI Diagnosis') ? 'AI Diagnosis' : 'Doctor Visit'}
                     </dd>
                   </div>
                   <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt className="text-sm font-medium text-gray-500">Date</dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                      {selectedRecord.date}
+                      {new Date(selectedRecord.createdAt).toLocaleDateString()}
                     </dd>
                   </div>
                   <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">Type</dt>
+                    <dt className="text-sm font-medium text-gray-500">Diagnosis</dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getRecordTypeColor(selectedRecord.recordType)}`}>
-                        {selectedRecord.recordType.replace('_', ' ')}
-                      </span>
+                      {selectedRecord.diagnosis}
                     </dd>
                   </div>
-                  <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                    <dt className="text-sm font-medium text-gray-500">Description</dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                      {selectedRecord.description}
-                    </dd>
-                  </div>
+                  {selectedRecord.prescription !== 'N/A' && (
+                    <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt className="text-sm font-medium text-gray-500">Prescription</dt>
+                      <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                        {selectedRecord.prescription}
+                      </dd>
+                    </div>
+                  )}
+                  {selectedRecord.notes && (
+                    <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                      <dt className="text-sm font-medium text-gray-500">Notes</dt>
+                      <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 whitespace-pre-wrap">
+                        {selectedRecord.notes}
+                      </dd>
+                    </div>
+                  )}
                 </dl>
               </div>
             </div>

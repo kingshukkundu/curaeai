@@ -3,47 +3,82 @@ import { authOptions } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+// GET endpoint to fetch medical records
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.user?.id) {
+    return new NextResponse('Unauthorized', { status: 401 });
+  }
+
+  try {
+    let records;
+    
+    if (session.user.role === 'PATIENT') {
+      // Patients can only see their own records
+      records = await prisma.medicalRecord.findMany({
+        where: {
+          userId: session.user.id
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        include: {
+          user: true
+        }
+      });
+    } else {
+      // Doctors and admins can see all records
+      records = await prisma.medicalRecord.findMany({
+        orderBy: {
+          createdAt: 'desc'
+        },
+        include: {
+          user: true
+        }
+      });
+    }
+
+    return NextResponse.json(records);
+  } catch (error) {
+    console.error('Error fetching medical records:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+}
+
+// POST endpoint to create a medical record
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   
   if (!session?.user?.id) {
-    console.error('No user ID in session:', session);
-    return new NextResponse('User ID not found in session', { status: 401 });
+    return new NextResponse('Unauthorized', { status: 401 });
   }
-  
-
 
   try {
     const body = await request.json();
-    const { conversation } = body;
-
-    if (!Array.isArray(conversation) || conversation.length === 0) {
-      console.error('Invalid or empty conversation data:', conversation);
-      return new NextResponse('Invalid conversation data', { status: 400 });
-    }
-
-    // Create a formatted diagnosis text from the conversation
-    const diagnosisText = conversation
-      .map((item: { question: string; answer: string }) => {
-        if (!item?.question || !item?.answer) {
-          console.error('Invalid conversation item:', item);
-          throw new Error('Invalid conversation format');
-        }
-        return `Q: ${item.question}\nA: ${item.answer}`;
-      })
-      .join('\n\n');
+    const { diagnosis, prescription, notes, userId, doctorId } = body;
 
     // Create the medical record
     const medicalRecord = await prisma.medicalRecord.create({
       data: {
-        diagnosis: 'AI Diagnosis Session',
-        prescription: 'N/A',
-        notes: diagnosisText,
+        diagnosis: diagnosis || 'N/A',
+        prescription: prescription || 'N/A',
+        notes: notes || '',
         user: {
           connect: {
-            id: session.user.id
+            id: userId || session.user.id
           }
-        }
+        },
+        ...(doctorId && {
+          doctor: {
+            connect: {
+              id: doctorId
+            }
+          }
+        })
+      },
+      include: {
+        user: true
       }
     });
 
